@@ -1,6 +1,11 @@
 import sys
 import Node
+import matplotlib.pyplot as plt
+import numpy as np
 
+
+# cada meta-heurística possui um conjunto de parâmetros cujos
+# valores devem ser fornecidos pela entrada
 if len(sys.argv) != 3:
     print('----------------------ERROR----------------------')
     print('Sintaxe: python3 "program" "instâncias" "solução" ')
@@ -59,15 +64,25 @@ with open(arg1, mode='r', encoding='utf-8') as file:
                 i += 1
 
 
-# print(array_of_nodes[31])
-# print(i)
+n_numero_de_cidades = i
+
+# obter valor K, que representa o número de veículos dado pela entrada
+k_numero_de_veiculos = header_array[0].split('-k')
+k_numero_de_veiculos = k_numero_de_veiculos[1]
+
+Q_capacidade_maxima_veiculo = header_array[5]
+
+print(f'Número de cidades a serem atendidas: {n_numero_de_cidades}')
+print(f'Número de Veículos: {k_numero_de_veiculos}')
+print(f'Capacidade máxima do veículo: {Q_capacidade_maxima_veiculo}')
+
 
 def print_node_list(node_list):
     node_index = 1
     for node in node_list:
-        print('node:' + str(node_index) + ' <' + str(node.getX()) + ',' +
-              str(node.getY()) + ',' + str(node.getZ()) + '>')
+        print('node:' + str(node_index) + ' <' + str(node.getX()) +
+              ',' + str(node.getY()) + ',' + str(node.getZ()) + '>')
         node_index += 1
 
 
-print_node_list(array_of_nodes)
+# print_node_list(array_of_nodes)

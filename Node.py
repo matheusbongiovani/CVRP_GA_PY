@@ -1,6 +1,3 @@
-import math
-
-
 class Node(object):
     def __init__(self, x=0, y=0, z=0):
         self.x = x
@@ -13,7 +10,7 @@ class Node(object):
     def distance(self, p):
         dx = self.x - p.x
         dy = self.y - p.y
-        return math.hypot(dx, dy)
+        return ((dx ** 2) + (dy ** 2)) ** 0.5
 
     def getX(self):
         return self.x
@@ -31,8 +28,9 @@ class Node(object):
         return self.y == other.y and self.x == other.x
 
 
-# c1 = Node(2, 2)
-# c2 = Node(1, 1)
+# c0 = Node(0, 0)
+# c1 = Node(-1, -1)
+# c2 = Node(2, 2)
 # print(c1)
 # print(c2)
 # print(c1 == c2)
