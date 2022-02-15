@@ -1,24 +1,31 @@
 import sys
-import Node
+import time
+import Genetic
+import matplotlib.pyplot as plt
+import numpy as np
 
+
+start = time.time()
+# cada meta-heurística possui um conjunto de parâmetros cujos
+# valores devem ser fornecidos pela entrada
 if len(sys.argv) != 3:
     print('----------------------ERROR----------------------')
-    print('Sintaxe: python3 "program" "instâncias" "solução" ')
+    print('Sintaxe: python3 "program.py" "instância.vrp" "solução" ')
     sys.exit('-------------------------------------------------')
 else:
     arg1 = sys.argv[1]
     arg2 = sys.argv[2]
 
-i = 0
 header_array = []
-array_of_nodes = []
+array_of_genes = []
 
+i = 0
 with open(arg1, mode='r', encoding='utf-8') as file:
     # file.read()
     # print(file.read())
 
     num_linha = 0
-    node_coord_bool = False
+    gene_coord_bool = False
     demand_section_bool = False
 
     for linha in file:
@@ -30,22 +37,23 @@ with open(arg1, mode='r', encoding='utf-8') as file:
             splited = linha.split()
             header_array.append(splited[2])
 
-        # trecho para pular linhas antes de armazenar a posição dos nós
+        # trecho para pular linhas da entrada que não será utilizado
         if num_linha >= 6 and num_linha < 9:
             num_linha += 1
             if num_linha > 8:
-                node_coord_bool = True
+                gene_coord_bool = True
 
         # trecho para armazenar as posições no vetor array_of_nodes
-        if node_coord_bool:
+        if gene_coord_bool:
             if linha.find('DEMAND_SECTION') != -1:
-                node_coord_bool = False
+                gene_coord_bool = False
                 demand_section_bool = True
 
             else:
-                splitXY = linha.split()
-                node = Node.Node(splitXY[1], splitXY[2])
-                array_of_nodes.append(node)
+                split_id_XY = linha.split()
+                node = Genetic.Gene(float(split_id_XY[1]), float(
+                    split_id_XY[2]), id=(int(split_id_XY[0])-1))
+                array_of_genes.append(node)
 
         # trecho para inserir a demanda de cada nó no vetor array_of_nodes
         if demand_section_bool:
@@ -55,19 +63,79 @@ with open(arg1, mode='r', encoding='utf-8') as file:
                 demand_section_bool = False
             else:
                 splitZ = linha.split()
-                array_of_nodes[i].z = splitZ[1]
+                array_of_genes[i].z = splitZ[1]
                 i += 1
 
 
-# print(array_of_nodes[31])
-# print(i)
-
-def print_node_list(node_list):
-    node_index = 1
-    for node in node_list:
-        print('node:' + str(node_index) + ' <' + str(node.getX()) + ',' +
-              str(node.getY()) + ',' + str(node.getZ()) + '>')
-        node_index += 1
+def print_genes_list(genes_list):
+    for gene in genes_list:
+        print(gene.__str__())
 
 
-print_node_list(array_of_nodes)
+def x_values(genes_list):
+    list_x = []
+    for gene in genes_list:
+        list_x.append(gene.getX())
+    return list_x
+
+
+def y_values(genes_list):
+    list_y = []
+    for gene in genes_list:
+        list_y.append(gene.getY())
+    return list_y
+
+
+def population_total_demand(genes_list):
+    total_demand = 0
+    for gene in genes_list:
+        total_demand += float(gene.getZ())
+    return total_demand
+
+
+# O Deposito sempre será o 1º elemento e com demanda 0 (node: 0 <82,76,0>)
+depot_node = array_of_genes[0]
+
+n_numero_de_cidades = i  # print(len(array_of_genes))
+
+# obter valor K, que representa o número de veículos dado pela entrada
+k_numero_de_veiculos = header_array[0].split('-k')
+k_numero_de_veiculos = k_numero_de_veiculos[1]
+
+Q_capacidade_maxima_veiculo = header_array[5]
+
+print(f'Número de cidades a serem atendidas: {n_numero_de_cidades}')
+print(f'Número de Veículos (número de rotas): {k_numero_de_veiculos}')
+print(f'Capacidade máxima do veículo: {Q_capacidade_maxima_veiculo}')
+
+
+cromo1 = Genetic.Cromossomo()
+
+print_genes_list(array_of_genes)
+
+cromo1.tour_add_gene(array_of_genes[1])
+cromo1.tour_add_gene(array_of_genes[2])
+cromo1.tour_add_gene(array_of_genes[3])
+
+
+print(cromo1.tour_total_demand())
+print(cromo1.tour_fitness_wout_depot())
+print(cromo1.tour_fitness_with_depot(depot_node))
+# print(array_of_genes[0].distance(array_of_genes[1]) +
+#       array_of_genes[1].distance(array_of_genes[2]) +
+#       array_of_genes[2].distance(array_of_genes[0]))
+
+
+# # plt.xkcd()  # deixar visual de quadrinho
+# # ----------- plot section---------------
+plt.grid(False)
+plt.scatter(x_values(array_of_genes), y_values(
+    array_of_genes), s=20, c='blue')
+plt.scatter(array_of_genes[0].x, array_of_genes[0].y, s=30, c='red')
+plt.show()
+# # ----------------------------------------
+
+
+# end = time.time()
+# print("Tempo de execução:", end-start)
+# plt.show()
