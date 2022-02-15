@@ -11,8 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "A-n32-k5.vrp",
-                "opt-A-n32-k5"
+                "A-n32-k5.vrp"
             ]
         }
     ]

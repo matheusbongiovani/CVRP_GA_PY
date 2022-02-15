@@ -8,13 +8,12 @@ import numpy as np
 start = time.time()
 # cada meta-heurística possui um conjunto de parâmetros cujos
 # valores devem ser fornecidos pela entrada
-if len(sys.argv) != 3:
+if len(sys.argv) != 2:
     print('----------------------ERROR----------------------')
-    print('Sintaxe: python3 "program.py" "instância.vrp" "solução" ')
+    print('Sintaxe: python3 "program.py" "instância.vrp" ')
     sys.exit('-------------------------------------------------')
 else:
     arg1 = sys.argv[1]
-    arg2 = sys.argv[2]
 
 header_array = []
 array_of_genes = []
@@ -43,7 +42,7 @@ with open(arg1, mode='r', encoding='utf-8') as file:
             if num_linha > 8:
                 gene_coord_bool = True
 
-        # trecho para armazenar as posições no vetor array_of_nodes
+        # trecho para armazenar as posições no vetor array_of_genes
         if gene_coord_bool:
             if linha.find('DEMAND_SECTION') != -1:
                 gene_coord_bool = False
@@ -55,7 +54,7 @@ with open(arg1, mode='r', encoding='utf-8') as file:
                     split_id_XY[2]), id=(int(split_id_XY[0])-1))
                 array_of_genes.append(node)
 
-        # trecho para inserir a demanda de cada nó no vetor array_of_nodes
+        # trecho para inserir a demanda de cada nó no vetor array_of_genes
         if demand_section_bool:
             if linha.find('DEMAND_SECTION') != -1:
                 continue
@@ -93,7 +92,7 @@ def population_total_demand(genes_list):
     return total_demand
 
 
-def func_matrix_distancias(genes_array, print='False'):
+def func_matrix_distancias(genes_array):
 
     matrix_ij = []
     size = len(genes_array)
@@ -108,10 +107,11 @@ def func_matrix_distancias(genes_array, print='False'):
 
 matrix_distancias = func_matrix_distancias(array_of_genes)
 
+
 # O Deposito sempre será o 1º elemento e com demanda 0 (node: 0 <82,76,0>)
 depot_node = array_of_genes[0]
 
-n_numero_de_cidades = i  # print(len(array_of_genes))
+n_numero_de_cidades = i  # len(array_of_genes)
 
 # obter valor K, que representa o número de veículos dado pela entrada
 k_numero_de_veiculos = header_array[0].split('-k')
@@ -122,14 +122,6 @@ Q_capacidade_maxima_veiculo = header_array[5]
 print(f'Número de cidades a serem atendidas: {n_numero_de_cidades}')
 print(f'Número de Veículos (número de rotas): {k_numero_de_veiculos}')
 print(f'Capacidade máxima do veículo: {Q_capacidade_maxima_veiculo}')
-
-
-cromo1 = Genetic.Cromossomo()
-
-
-cromo1.tour_add_gene(array_of_genes[1])
-cromo1.tour_add_gene(array_of_genes[2])
-cromo1.tour_add_gene(array_of_genes[3])
 
 
 # # plt.xkcd()  # deixar visual de quadrinho
