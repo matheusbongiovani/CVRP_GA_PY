@@ -93,6 +93,21 @@ def population_total_demand(genes_list):
     return total_demand
 
 
+def func_matrix_distancias(genes_array, print='False'):
+
+    matrix_ij = []
+    size = len(genes_array)
+    for i in range(size):
+        a = []
+        for j in range(size):
+            a.append(genes_array[i].distance(genes_array[j]))
+        matrix_ij.append(a)
+
+    return matrix_ij
+
+
+matrix_distancias = func_matrix_distancias(array_of_genes)
+
 # O Deposito sempre será o 1º elemento e com demanda 0 (node: 0 <82,76,0>)
 depot_node = array_of_genes[0]
 
@@ -111,19 +126,10 @@ print(f'Capacidade máxima do veículo: {Q_capacidade_maxima_veiculo}')
 
 cromo1 = Genetic.Cromossomo()
 
-print_genes_list(array_of_genes)
 
 cromo1.tour_add_gene(array_of_genes[1])
 cromo1.tour_add_gene(array_of_genes[2])
 cromo1.tour_add_gene(array_of_genes[3])
-
-
-print(cromo1.tour_total_demand())
-print(cromo1.tour_fitness_wout_depot())
-print(cromo1.tour_fitness_with_depot(depot_node))
-# print(array_of_genes[0].distance(array_of_genes[1]) +
-#       array_of_genes[1].distance(array_of_genes[2]) +
-#       array_of_genes[2].distance(array_of_genes[0]))
 
 
 # # plt.xkcd()  # deixar visual de quadrinho

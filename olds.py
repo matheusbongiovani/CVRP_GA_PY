@@ -68,6 +68,9 @@ class Cromossomo(object):
     def getK(self):
         return int(self.k)
 
+    def tour_add_gene(self, gene):
+        self.tour_genes.append(gene)
+
     def remove_gene_at_index(self, index=-1):
         return self.tour_genes.pop(index)
 
