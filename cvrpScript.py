@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+# adicionar rota a qual a cidade está inserida? self.rota = rota
 class Gene(object):
 
     def __init__(self, x=0, y=0, z=0, id=0):
