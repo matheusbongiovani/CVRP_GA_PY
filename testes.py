@@ -21,5 +21,11 @@ newpop += [child1, child2]
 # a = [i*2 for i in range(0,10)]    
 # a = [ 2*x for x in [i for i in range(0,10)]]
 # b = {str(x): x for x in range(0,10)}
-pop.sort()
-print(pop)
+
+
+
+l1 = [1, 2, 3]
+l2 = [5, 3, 2, 9, 4, 5, 6, 7]
+
+print(l2[-2:])
+

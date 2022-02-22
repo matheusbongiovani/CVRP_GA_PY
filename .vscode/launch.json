@@ -4,7 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
         {
             "name": "Python: Current File",
             "type": "python",
@@ -12,7 +11,9 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "A-n32-k5.vrp"
+                "A-n32-k5.vrp",
+                "60",
+                "0.05"
             ]
         }
     ]
