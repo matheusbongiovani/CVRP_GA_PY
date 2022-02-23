@@ -11,8 +11,8 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "A-n32-k5.vrp",
-                "60",
+                "A-n65-k9.vrp",
+                "100",
                 "0.05"
             ]
         }

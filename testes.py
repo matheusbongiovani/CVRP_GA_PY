@@ -7,14 +7,6 @@ newpop = []
 x = random.sample(pop, 4)   
 y = random.sample(pop, 4)
 
-cutIdx1 = random.randint(1, min(len(x), len(y)) - 1)
-cutIdx2 = random.randint(1, min(len(x), len(y)) - 1)
-cutIdx1, cutIdx2 = min(cutIdx1, cutIdx2), max(cutIdx1, cutIdx2)
-# Doing crossover and generating two children
-child1 = x[:cutIdx1] + y[cutIdx1:cutIdx2] + x[cutIdx2:]
-child2 = y[:cutIdx1] + x[cutIdx1:cutIdx2] + y[cutIdx2:]
-newpop += [child1, child2]
-
 # print(line, end='')
 # list_of_lists = [[] for i in range(5)]
 # list comprehension
@@ -23,9 +15,27 @@ newpop += [child1, child2]
 # b = {str(x): x for x in range(0,10)}
 
 
-
+l0 = [1]
 l1 = [1, 2, 3]
 l2 = [5, 3, 2, 9, 4, 5, 6, 7]
 
-print(l2[-2:])
+#a porra da função NÃO ALTERA os dados do parametro, apenas lê...
+# def rmv(l2):
+#     l2 = l1
+#     return l2
+
+# print(l2)
+# print(rmv(l2))
+# print(l2)
+
+asdf = [2, 3, 4, 8, 5, 25, 0, 16, 0, 6, 1, 12, 21, 13, 0, 0, 27, 18, 11, 17, 19, 7, 0, 0, 9, 22, 15, 29, 14, 24, 20, 26] 
+aaa = asdf.sort()
+print(asdf)
+
+
+
+ssss = sum([98.0, 0.0, 83.0, 19.0, 32.0, 47.0, 44.0])
+print(ssss)
+
+# print(l2[-2:])
 
