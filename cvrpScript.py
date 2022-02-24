@@ -4,17 +4,14 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 
-
-# adicionar rota a qual a cidade está inserida? self.rota = rota
+#Classe Gene, que representa as cidades da instância.
 class Gene(object):
-
     def __init__(self, x=0, y=0, z=0, id=0):
         self.x = x
         self.y = y
         self.z = z
         self.id = id
-
-    # fazer matriz de distancias para economizar contas repitidas
+    # Posteriormente anexado à matriz de distancias reduzindo contas repitidas
     def distance(self, p):
         dx = self.x - p.x
         dy = self.y - p.y
@@ -51,12 +48,12 @@ start_time = time.time()
 # valores devem ser fornecidos pela entrada
 if len(sys.argv) != 4:
     print('----------------------ERROR----------------------')
-    print('Sintaxe: python3 "program.py" "instância.vrp" "população" "prob mutação(0.5)" ')
+    print('Sintaxe: python3 "program.py" "instância.vrp" "população" "prob mutação(%)" ')
     sys.exit('-------------------------------------------------')
 else:
     arg1 = sys.argv[1]
     arg_size = sys.argv[2]
-    arg_mutate = float(sys.argv[3])
+    arg_mutate = float(sys.argv[3])/100
     
 
 header_array = []
@@ -64,16 +61,11 @@ array_of_genes = []
 
 index_entrada = 0
 with open(arg1, mode='r', encoding='utf-8') as file:
-    # file.read()
-    # print(file.read())
-
     num_linha = 0
     gene_coord_bool = False
     demand_section_bool = False
 
     for linha in file:
-
-        # print(line, end='')
         # trecho para armazenar informações do cabeçalho
         if num_linha < 6:
             num_linha += 1
@@ -91,7 +83,6 @@ with open(arg1, mode='r', encoding='utf-8') as file:
             if linha.find('DEMAND_SECTION') != -1:
                 gene_coord_bool = False
                 demand_section_bool = True
-
             else:
                 split_id_XY = linha.split()
                 node = Gene(float(split_id_XY[1]), float(
@@ -110,6 +101,7 @@ with open(arg1, mode='r', encoding='utf-8') as file:
                 index_entrada += 1
 # ---- fim da leitura da entrada ----
 
+
 n_genes = index_entrada  # len(array_of_genes)
 
 # obter valor K, que representa o número de veículos dado pela entrada
@@ -121,15 +113,6 @@ k_cap_max = float(header_array[5])
 def print_genes_list(genes_list):
     for gene in genes_list:
         print(gene.__str__())
-
-def print_solution(solution):
-    print('[', end='')
-    for rota in solution:
-        print('0 ', end='')
-        for gene in rota:
-            print(gene.getId(),end=' ')
-        # print('', end='')
-    print('0]', end='')
 
 
 def x_values(genes_list):
@@ -144,7 +127,6 @@ def y_values(genes_list):
     for gene in genes_list:
         list_y.append(gene.getY())
     return list_y
-
 
 
 def population_total_demand(genes_list):
@@ -167,7 +149,7 @@ def func_matrix_distancias(genes):
 matrix_distancias = func_matrix_distancias(array_of_genes)
 
 
-#fitness_solution([9, 3, 0, 2, 4, 0, 5, 6, 0, 8, 7, 1])
+#modelo fitness_solution([9, 3, 0, 2, 4, 0, 5, 6, 0, 8, 7, 1]) == Cromossomo
 #os depots no meio do vetor já estão inseridos, precisamos adicionar o 1º e o último
 def fitness(solution):
     cost = 0
@@ -215,7 +197,7 @@ def turn_feasible(cromo_entrada):
         i = 0
         while i < len(crmo):
             total += crmo[i].getZ()
-            if total > k_cap_max:
+            if total >= k_cap_max:
                 crmo.insert(i, array_of_genes[0])
                 total = 0
             i += 1
@@ -292,7 +274,7 @@ def create_new_population(pop_entrada, mutate_prob):
     
     def crossover_mutate_and_add_to_new_generation(parents):
         # filhos serão construídos através de cortes nos vetores dos pais
-        cut1, cut2 = random.randint(1, n_genes-1), random.randint(1, n_genes-1)
+        cut1, cut2 = random.randrange(len(parents)), random.randrange(len(parents))
         cut1, cut2 = min(cut1, cut2), max(cut1, cut2)
 
         child1 = parents[0][:cut1] + parents[1][cut1:cut2] + parents[0][cut2:]
@@ -337,6 +319,8 @@ def inicializar():
         population = create_new_population(population, mutate_prob)
         index_geracao_atual += 1
 
+        # Passar a salvar custo das iterações (best fitness) para gerar gráficos
+        # é bom saber também exatamente qual iteração obteve o melhor fitness...
         for solution in population:
             fit_value = fitness(solution)
             if fit_value < best_Fitness:
@@ -354,12 +338,15 @@ def inicializar():
         if fitness(best_solution) <= fitness(best_solution_between_gens):
             best_solution_between_gens = best_solution
 
-        if iteracoes_sem_melhora > 1000:
+
+        #putz os elementos da população tão uns 90%
+        if iteracoes_sem_melhora > 100:
+            vercaraPop = 0
             break
         
         execution_time = time.time()
         time_elapsed = execution_time - start_time
-        if time_elapsed > 2000:
+        if time_elapsed > 300:
             passsou = 0
             break
 
@@ -440,7 +427,7 @@ print(f'demanda das rotas {route_demand(best_reached_solution)}')
 plt.grid(False)
 plt.scatter(x_values(array_of_genes), y_values(
     array_of_genes), s=20, c='blue')
-plt.scatter(array_of_genes[0].x, array_of_genes[0].y, s=30, c='red')
+plt.scatter(array_of_genes[0].x, array_of_genes[0].y, s=35, c='black')
 # def plot_solution(solution):
 #     for rota in solution:
 #         plt.plot(x_values(rota),y_values(rota))
@@ -458,7 +445,6 @@ for each in plot_sol:
         plt.plot(x_values(list_to_plot),y_values(list_to_plot))
         list_to_plot.clear()
         list_to_plot.append(array_of_genes[0])
-
 
 
 # # # ----------------------------------------

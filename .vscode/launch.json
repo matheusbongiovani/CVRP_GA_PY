@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+    
         {
             "name": "Python: Current File",
             "type": "python",
@@ -13,7 +14,7 @@
             "args": [
                 "A-n32-k5.vrp",
                 "100",
-                "0.05"
+                "5"
             ]
         }
     ]
