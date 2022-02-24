@@ -1,7 +1,6 @@
 import sys
 import time
 import random
-from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -57,7 +56,7 @@ if len(sys.argv) != 4:
 else:
     arg1 = sys.argv[1]
     arg_size = sys.argv[2]
-    arg_mutate = sys.argv[3]
+    arg_mutate = float(sys.argv[3])
     
 
 header_array = []
@@ -193,42 +192,27 @@ def turn_feasible(cromo_entrada):
     sorted = cromo.copy()
     sorted.sort()
     # cities_seq = [i for i in range(1,len(cromo)+1)]
-    missing = []
-    duplicates = []
 
-    # percorer a solução ordenada para verificar se faltam cidades (havendo duplicatas)
-    for gene in genes_seq_entrada:
-        if gene not in sorted:
-            missing.append(gene)
-    
-    # se tiver elementos faltando, logo terão elementos duplicados, então:
-    if missing:
-        index = 0
-        while index < len(sorted)-1:
-            if sorted[index].getId() == sorted[index+1].getId():
-                # Não adicionar depots a duplicatas, pois ele sempre aparecerá múltiplas vezes
-                if sorted[index].getId() != 0:
-                    duplicates.append(sorted[index])
-            index += 1
-    
-    
-    
-    # substituir as duplicadas pelas cidades que estão faltando
-    if duplicates:
-        dup_aux = duplicates.copy()
-        dpc_i = 0
-        i = 0
-        while i < len(cromo):
-            if dpc_i < len(missing) and cromo[i] in dup_aux:
-                dup_aux.remove(cromo[i])
-                cromo[i] = missing[dpc_i]
-                dpc_i += 1
-                i += 1
-            else:
-                i += 1
+    duplicates = True
+    while duplicates:
+        duplicates = False
+        for i1 in range(len(cromo)):
+            for i2 in range(i1):
+                if cromo[i1] == cromo[i2]:
+                    noDuplicates = True
+                    for id in genes_seq_entrada:
+                        if id not in cromo:
+                            cromo[i1] = id
+                            noDuplicates = False
+                            break
+                    if noDuplicates:
+                        del cromo[i1]
+                    duplicates = True
+                if duplicates: break
+            if duplicates: break
+
 
     #separar cidades em rotas # mudar jeito de como distribuir a demanda...
-    
     def distribuir_demand(cromo_aux):
         crmo = cromo_aux.copy()
         total = 0.0
@@ -242,16 +226,8 @@ def turn_feasible(cromo_entrada):
         return crmo
         
     cromo = distribuir_demand(cromo)
-    
-    # num_depots_intermediarios = 0
-    # num_depots_intermediarios = cromo.count(array_of_genes[0])
-    # if num_depots_intermediarios != k_rotas-1:
-    #     while num_depots_intermediarios != k_rotas-1:
-    #         cromo = random.sample(cromo, len(cromo))
-    #         cromo = distribuir_demand(cromo)
-
-
-        # remoção de possíveis depots consecutivos:
+    comolen = len(cromo)
+    # remoção de possíveis depots consecutivos:
     i = 0
     while i < len(cromo)-1:
         if cromo[i].getId() == 0 and cromo[i+1].getId() == 0:
@@ -280,7 +256,7 @@ def create_initial_population(genes_entrada, pop_size):
 
 
 # modelo da entrada: [3,1,2,6,4,5,7,8,9]
-def create_new_population(pop_entrada):
+def create_new_population(pop_entrada, mutate_prob):
     pop = pop_entrada.copy()
     new_pop = []
 
@@ -326,8 +302,8 @@ def create_new_population(pop_entrada):
         child1 = parents[0][:cut1] + parents[1][cut1:cut2] + parents[0][cut2:]
         child2 = parents[1][:cut1] + parents[0][cut1:cut2] + parents[1][cut2:]
 
-        child1 = mutation(child1, arg_mutate)
-        child1 = mutation(child1, arg_mutate)
+        child1 = mutation(child1, mutate_prob)
+        child1 = mutation(child1, mutate_prob)
 
         child1 = turn_feasible(child1)
         child2 = turn_feasible(child2)
@@ -349,42 +325,47 @@ def inicializar():
     population = create_initial_population(array_of_genes,arg_size)
 
     aaaa = [fitness(i) for i in population]
-
+    mutate_prob = float(arg_mutate)
     index_geracao_atual = 0
-    for i in range(2):
-        population = create_new_population(population)
+    index_iteracoes_sem_melhora = 0
+    best_solution_between_gens = population[0] #tem que iniciar com algum valor
+    best_solution = None
+    best_Fitness = 99999999999
+    
+    for i in range(1000):
+        population = create_new_population(population, mutate_prob)
         index_geracao_atual += 1
+
+        for solution in population:
+            fit_value = fitness(solution)
+            if fit_value < best_Fitness:
+                best_Fitness = fit_value
+            best_solution_atual = solution
+        
+        if best_solution_atual == best_solution:
+            index_iteracoes_sem_melhora += 1
+            mutate_prob += 0.01
+        else:
+            best_solution = best_solution_atual
+            index_iteracoes_sem_melhora = 0
+            mutate_prob = arg_mutate
+        
+        if fitness(best_solution) <= fitness(best_solution_between_gens):
+            best_solution_between_gens = best_solution
+
+
 
     bbbbb = [fitness(i) for i in population]
 
-    best_Fitness = 99999999999
-    best_solution = Any
-    for solution in population:
-        fit_value = fitness(solution)
-        if fit_value < best_Fitness:
-            best_Fitness = fit_value
-        best_solution = solution
 
-    print(best_solution)
-
-    vtnc = turn_feasible(best_solution)
-    print(vtnc)
-
-    print(genes_seq_entrada)
+    print(f'iterações sem melhora:{index_iteracoes_sem_melhora}, prob_mutate:{mutate_prob}')
 
     oloco = 0
-    return best_solution
+    return best_solution_between_gens
 
 
 #não tá subs as duplicadas antes de eu aplicar o turn_feasible ali ^ ... turn_feasible tá oredenando!!!!!!!!!! e removendo todos depot
 best_reached_solution = inicializar()
-
-
-def k_total_demand(k_set):
-    weight = 0
-    for gene in k_set:
-        weight += gene.getZ()
-    return weight
 
 
 def check_population_total_demand(solution):
@@ -415,37 +396,66 @@ print(f'Capacidade máxima do veículo: {k_cap_max}')
 
 # cromoRota = [array_of_genes[0], array_of_genes[5], array_of_genes[10], array_of_genes[11], array_of_genes[0]]
 
+
 def route_demand(solution):
     rotas = solution.copy()
     demanda_rotas = []
     demanda = 0.0
     for gene in rotas:
         demanda += gene.getZ()
-        if gene.getId()== 0:
+        if gene.getId()== 0 and demanda != 0:
             demanda_rotas.append(demanda)
             demanda = 0
+    demanda_rotas.append(demanda)
     return demanda_rotas
+
+# def return_routes(solution):
+#     rotas = solution.copy()
+#     for gene in rotas:
+#         demanda += gene.getZ()
+#         if gene.getId()== 0 and demanda !=:
+#             demanda_rotas.append(demanda)
+#             demanda = 0
+#     demanda_rotas.append(demanda)
+#     return demanda_rotas
         
         
 print(f'demanda das rotas {route_demand(best_reached_solution)}')
-
+# best_reached_solution.insert(0, array_of_genes[0])
+# best_reached_solution.insert(-1, array_of_genes[0])
 
 print(best_reached_solution, fitness(best_reached_solution))
 
 
-# # # # # # plt.xkcd()  # deixar visual de quadrinho
-# # # # ----------- plot section---------------
-# plt.grid(False)
-# plt.scatter(x_values(array_of_genes), y_values(
-#     array_of_genes), s=20, c='blue')
-# plt.scatter(array_of_genes[0].x, array_of_genes[0].y, s=30, c='red')
-# # def plot_solution(solution):
-# #     for rota in solution:
-# #         plt.plot(x_values(rota),y_values(rota))
-# plt.plot(x_values(best_reached_solution),y_values(best_reached_solution))
+# # # # # plt.xkcd()  # deixar visual de quadrinho
+# # # ----------- plot section---------------
+plt.grid(False)
+plt.scatter(x_values(array_of_genes), y_values(
+    array_of_genes), s=20, c='blue')
+plt.scatter(array_of_genes[0].x, array_of_genes[0].y, s=30, c='red')
+# def plot_solution(solution):
+#     for rota in solution:
+#         plt.plot(x_values(rota),y_values(rota))
 
-# plt.show()
-# # # # ----------------------------------------
+plot_sol = best_reached_solution.copy()
+plot_sol.insert(0,array_of_genes[0])
+plot_sol.append(array_of_genes[0])
+
+print(f'plot_sol: {plot_sol}')
+# list_to_plot = []
+# for each in plot_sol:
+#     list_to_plot.append(each)
+#     if each.getId() == 0:
+#         list_to_plot.append(array_of_genes[0])
+#         plot_sol.insert(0,array_of_genes[0])
+#         plt.plot(x_values(list_to_plot),y_values(list_to_plot))
+#         list_to_plot.clear()
+
+
+plt.plot(x_values(plot_sol),y_values(plot_sol))
+
+plt.show()
+# # # ----------------------------------------
 
 
 # end = time.time()
