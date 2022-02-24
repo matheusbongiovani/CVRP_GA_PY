@@ -46,7 +46,7 @@ class Gene(object):
         return ((self.id) < (other.id))
 
 
-start = time.time()
+start_time = time.time()
 # cada meta-heurística possui um conjunto de parâmetros cujos
 # valores devem ser fornecidos pela entrada
 if len(sys.argv) != 4:
@@ -184,14 +184,10 @@ def fitness(solution):
 # tornar a solução factível, fazendo com que atenda as restrições do problema.
 # solução inicial sempre vai ser factivel... Aplicar ela após mut/cross
 genes_seq_entrada = array_of_genes.copy()
-genes_seq_entrada.pop(0)  # remover depot 
-#[0, 1, 4, 3, 0, 2, 2, 6, 0]   NÃO TÁ FUNFANDO DIREITO....
+genes_seq_entrada.pop(0)  # array com todas as cidades exceto o depot
 def turn_feasible(cromo_entrada):
     global genes_seq_entrada
     cromo = cromo_entrada.copy()
-    sorted = cromo.copy()
-    sorted.sort()
-    # cities_seq = [i for i in range(1,len(cromo)+1)]
 
     duplicates = True
     while duplicates:
@@ -219,7 +215,7 @@ def turn_feasible(cromo_entrada):
         i = 0
         while i < len(crmo):
             total += crmo[i].getZ()
-            if total >= k_cap_max:
+            if total > k_cap_max:
                 crmo.insert(i, array_of_genes[0])
                 total = 0
             i += 1
@@ -325,14 +321,19 @@ def inicializar():
     population = create_initial_population(array_of_genes,arg_size)
 
     aaaa = [fitness(i) for i in population]
+
+    num_iteracoes = 5000
+
     mutate_prob = float(arg_mutate)
     index_geracao_atual = 0
-    index_iteracoes_sem_melhora = 0
+    iteracoes_sem_melhora = 0
     best_solution_between_gens = population[0] #tem que iniciar com algum valor
     best_solution = None
     best_Fitness = 99999999999
-    
-    for i in range(1000):
+    execution_time = time.time()
+
+
+    while True:
         population = create_new_population(population, mutate_prob)
         index_geracao_atual += 1
 
@@ -343,28 +344,37 @@ def inicializar():
             best_solution_atual = solution
         
         if best_solution_atual == best_solution:
-            index_iteracoes_sem_melhora += 1
+            iteracoes_sem_melhora += 1
             mutate_prob += 0.01
         else:
             best_solution = best_solution_atual
-            index_iteracoes_sem_melhora = 0
+            iteracoes_sem_melhora = 0
             mutate_prob = arg_mutate
         
         if fitness(best_solution) <= fitness(best_solution_between_gens):
             best_solution_between_gens = best_solution
 
+        if iteracoes_sem_melhora > 1000:
+            break
+        
+        execution_time = time.time()
+        time_elapsed = execution_time - start_time
+        if time_elapsed > 2000:
+            passsou = 0
+            break
+
+##--------------------------------------------
 
 
     bbbbb = [fitness(i) for i in population]
 
+    print('-----------------------------------------------------------------------------')
+    print(f'num de iterações: {index_geracao_atual}, iterações sem melhora:{iteracoes_sem_melhora}, prob_mutate:{mutate_prob}')
+    print(f'fitness melhor de todos:{fitness(best_solution_between_gens)}, fitness melhor geração atual: {fitness(best_solution)}')
 
-    print(f'iterações sem melhora:{index_iteracoes_sem_melhora}, prob_mutate:{mutate_prob}')
-
-    oloco = 0
     return best_solution_between_gens
 
 
-#não tá subs as duplicadas antes de eu aplicar o turn_feasible ali ^ ... turn_feasible tá oredenando!!!!!!!!!! e removendo todos depot
 best_reached_solution = inicializar()
 
 
@@ -424,8 +434,6 @@ print(f'demanda das rotas {route_demand(best_reached_solution)}')
 # best_reached_solution.insert(0, array_of_genes[0])
 # best_reached_solution.insert(-1, array_of_genes[0])
 
-print(best_reached_solution, fitness(best_reached_solution))
-
 
 # # # # # plt.xkcd()  # deixar visual de quadrinho
 # # # ----------- plot section---------------
@@ -441,23 +449,22 @@ plot_sol = best_reached_solution.copy()
 plot_sol.insert(0,array_of_genes[0])
 plot_sol.append(array_of_genes[0])
 
-print(f'plot_sol: {plot_sol}')
-# list_to_plot = []
-# for each in plot_sol:
-#     list_to_plot.append(each)
-#     if each.getId() == 0:
-#         list_to_plot.append(array_of_genes[0])
-#         plot_sol.insert(0,array_of_genes[0])
-#         plt.plot(x_values(list_to_plot),y_values(list_to_plot))
-#         list_to_plot.clear()
+print(f'plot_sol: {plot_sol}, fitness:{fitness(best_reached_solution)}')
+list_to_plot = []
+for each in plot_sol:
+    list_to_plot.append(each)
+    if each.getId() == 0:
+        list_to_plot.append(array_of_genes[0])
+        plt.plot(x_values(list_to_plot),y_values(list_to_plot))
+        list_to_plot.clear()
+        list_to_plot.append(array_of_genes[0])
 
 
-plt.plot(x_values(plot_sol),y_values(plot_sol))
 
-plt.show()
+# # # ----------------------------------------
+end_time = time.time()
+print("Tempo de execução:", end_time-start_time)
 # # # ----------------------------------------
 
+plt.show()
 
-# end = time.time()
-# print("Tempo de execução:", end-start)
-# plt.show()
