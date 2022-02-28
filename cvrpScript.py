@@ -163,6 +163,19 @@ def fitness(solution):
     return cost
 
 
+def route_demand(solution):
+    rotas = solution.copy()
+    demanda_rotas = []
+    demanda = 0.0
+    for gene in rotas:
+        demanda += gene.getZ()
+        if gene.getId()== 0 and demanda != 0:
+            demanda_rotas.append(demanda)
+            demanda = 0
+    demanda_rotas.append(demanda)
+    return demanda_rotas
+
+
 # tornar a solução factível, fazendo com que atenda as restrições do problema.
 # solução inicial sempre vai ser factivel... Aplicar ela após mut/cross
 genes_seq_entrada = array_of_genes.copy()
@@ -170,6 +183,10 @@ genes_seq_entrada.pop(0)  # array com todas as cidades exceto o depot
 def turn_feasible(cromo_entrada):
     global genes_seq_entrada
     cromo = cromo_entrada.copy()
+
+    for each in cromo:
+        if each.getId() == 0:
+            cromo.remove(each)
 
     duplicates = True
     while duplicates:
@@ -196,23 +213,20 @@ def turn_feasible(cromo_entrada):
         total = 0.0
         i = 0
         while i < len(crmo):
-            total += crmo[i].getZ()
-            if total >= k_cap_max:
+            total += crmo[i].getZ()  #Se demanda de i exceder, o Depot é inserido imediatamente antes
+            if total > k_cap_max:
                 crmo.insert(i, array_of_genes[0])
                 total = 0
             i += 1
         return crmo
         
     cromo = distribuir_demand(cromo)
-    comolen = len(cromo)
     # remoção de possíveis depots consecutivos:
     i = 0
     while i < len(cromo)-1:
         if cromo[i].getId() == 0 and cromo[i+1].getId() == 0:
             del cromo[i]
         i += 1
-
-    caboporra = 0
     
     return cromo
 
@@ -225,10 +239,14 @@ def create_initial_population(genes_entrada, pop_size):
 
     for i in range(int(pop_size)):
         randomized = random.sample(genes, len(genes))
+
+        antesss = randomized.copy()
+
         randomized = turn_feasible(randomized)
         population.append(randomized)
 
-    fsafsa =0
+        dpsss = randomized.copy()        
+
     # modelo da solução: [3,1,2,6,4,5,7,8,9]
     return population
 
@@ -302,9 +320,7 @@ def create_new_population(pop_entrada, mutate_prob):
 def inicializar():
     population = create_initial_population(array_of_genes,arg_size)
 
-    aaaa = [fitness(i) for i in population]
-
-    num_iteracoes = 5000
+    inicial_pop_fitness = [fitness(i) for i in population]
 
     mutate_prob = float(arg_mutate)
     index_geracao_atual = 0
@@ -339,8 +355,8 @@ def inicializar():
             best_solution_between_gens = best_solution
 
 
-        #putz os elementos da população tão uns 90%
-        if iteracoes_sem_melhora > 100:
+        #putz os elementos da população tão uns 90% td iguais
+        if iteracoes_sem_melhora > 300:
             vercaraPop = 0
             break
         
@@ -380,46 +396,15 @@ rota1 = [array_of_genes[1], array_of_genes[10],array_of_genes[5]]
 
 print('demanda total:',population_total_demand(array_of_genes))
 
-# print(array_of_genes[0].distance(array_of_genes[1]) +
-#       array_of_genes[1].distance(array_of_genes[10]) +
-#       array_of_genes[10].distance(array_of_genes[5]) +
-#       array_of_genes[5].distance(array_of_genes[0]))
-
 
 print(f'Número de cidades a serem atendidas: {n_genes}')
 print(f'Número de Veículos (número de rotas): {k_rotas}')
 print(f'Capacidade máxima do veículo: {k_cap_max}')
 
 
-# cromoRota = [array_of_genes[0], array_of_genes[5], array_of_genes[10], array_of_genes[11], array_of_genes[0]]
 
-
-def route_demand(solution):
-    rotas = solution.copy()
-    demanda_rotas = []
-    demanda = 0.0
-    for gene in rotas:
-        demanda += gene.getZ()
-        if gene.getId()== 0 and demanda != 0:
-            demanda_rotas.append(demanda)
-            demanda = 0
-    demanda_rotas.append(demanda)
-    return demanda_rotas
-
-# def return_routes(solution):
-#     rotas = solution.copy()
-#     for gene in rotas:
-#         demanda += gene.getZ()
-#         if gene.getId()== 0 and demanda !=:
-#             demanda_rotas.append(demanda)
-#             demanda = 0
-#     demanda_rotas.append(demanda)
-#     return demanda_rotas
-        
-        
 print(f'demanda das rotas {route_demand(best_reached_solution)}')
-# best_reached_solution.insert(0, array_of_genes[0])
-# best_reached_solution.insert(-1, array_of_genes[0])
+
 
 
 # # # # # plt.xkcd()  # deixar visual de quadrinho
