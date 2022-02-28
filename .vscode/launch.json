@@ -12,7 +12,8 @@
             "console": "integratedTerminal",
             "args": [
                 "A-n32-k5.vrp",
-                "opt-A-n32-k5"
+                "100",
+                "5"
             ]
         }
     ]

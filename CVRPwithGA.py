@@ -1,5 +1,6 @@
 import sys
 import time
+import random
 import Genetic
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,13 +9,12 @@ import numpy as np
 start = time.time()
 # cada meta-heurística possui um conjunto de parâmetros cujos
 # valores devem ser fornecidos pela entrada
-if len(sys.argv) != 3:
+if len(sys.argv) != 2:
     print('----------------------ERROR----------------------')
-    print('Sintaxe: python3 "program.py" "instância.vrp" "solução" ')
+    print('Sintaxe: python3 "program.py" "instância.vrp" ')
     sys.exit('-------------------------------------------------')
 else:
     arg1 = sys.argv[1]
-    arg2 = sys.argv[2]
 
 header_array = []
 array_of_genes = []
@@ -43,7 +43,7 @@ with open(arg1, mode='r', encoding='utf-8') as file:
             if num_linha > 8:
                 gene_coord_bool = True
 
-        # trecho para armazenar as posições no vetor array_of_nodes
+        # trecho para armazenar as posições no vetor array_of_genes
         if gene_coord_bool:
             if linha.find('DEMAND_SECTION') != -1:
                 gene_coord_bool = False
@@ -55,7 +55,7 @@ with open(arg1, mode='r', encoding='utf-8') as file:
                     split_id_XY[2]), id=(int(split_id_XY[0])-1))
                 array_of_genes.append(node)
 
-        # trecho para inserir a demanda de cada nó no vetor array_of_nodes
+        # trecho para inserir a demanda de cada nó no vetor array_of_genes
         if demand_section_bool:
             if linha.find('DEMAND_SECTION') != -1:
                 continue
@@ -65,6 +65,14 @@ with open(arg1, mode='r', encoding='utf-8') as file:
                 splitZ = linha.split()
                 array_of_genes[i].z = splitZ[1]
                 i += 1
+###---- fim da leitura da entrada ----
+
+depot_node = array_of_genes[0]
+n_genes = i  # len(array_of_genes)
+# obter valor K, que representa o número de veículos dado pela entrada
+k_rotas = header_array[0].split('-k')
+k_rotas = int(k_rotas[1])
+k_cap_max = float(header_array[5])
 
 
 def print_genes_list(genes_list):
@@ -93,37 +101,64 @@ def population_total_demand(genes_list):
     return total_demand
 
 
-# O Deposito sempre será o 1º elemento e com demanda 0 (node: 0 <82,76,0>)
-depot_node = array_of_genes[0]
+def func_matrix_distancias(genes):
 
-n_numero_de_cidades = i  # print(len(array_of_genes))
+    matrix_ij = []
+    size = len(genes)
+    for i in range(size):
+        a = []
+        for j in range(size):
+            a.append(genes[i].distance(genes[j]))
+        matrix_ij.append(a)
 
-# obter valor K, que representa o número de veículos dado pela entrada
-k_numero_de_veiculos = header_array[0].split('-k')
-k_numero_de_veiculos = k_numero_de_veiculos[1]
+    return matrix_ij
 
-Q_capacidade_maxima_veiculo = header_array[5]
-
-print(f'Número de cidades a serem atendidas: {n_numero_de_cidades}')
-print(f'Número de Veículos (número de rotas): {k_numero_de_veiculos}')
-print(f'Capacidade máxima do veículo: {Q_capacidade_maxima_veiculo}')
-
-
-cromo1 = Genetic.Cromossomo()
-
-print_genes_list(array_of_genes)
-
-cromo1.tour_add_gene(array_of_genes[1])
-cromo1.tour_add_gene(array_of_genes[2])
-cromo1.tour_add_gene(array_of_genes[3])
+matrix_distancias = func_matrix_distancias(array_of_genes)
 
 
-print(cromo1.tour_total_demand())
-print(cromo1.tour_fitness_wout_depot())
-print(cromo1.tour_fitness_with_depot(depot_node))
-# print(array_of_genes[0].distance(array_of_genes[1]) +
-#       array_of_genes[1].distance(array_of_genes[2]) +
-#       array_of_genes[2].distance(array_of_genes[0]))
+def create_n_cromossomo(genes_entrada, k_num, k_cap, size_pop):
+    genes = genes_entrada
+    depot = genes.pop(0)
+    population = []
+
+    def capacidade_ocupada_rota(rota):
+        cap_ocupada = 0
+        for gene in rota:
+            cap_ocupada += gene.getZ()
+        return cap_ocupada
+
+    def create_solution(rand_genes):
+        solution = []
+        rota_k = []            
+        randomized = random.sample(rand_genes, len(rand_genes))
+        for gene in randomized:
+            if capacidade_ocupada_rota(rota_k) > float(k_cap):
+                solution.append(rota_k)
+                rota_k.clear()
+            else:
+                rota_k.append(gene)   
+        return solution
+
+    for elem in range(size_pop):
+
+        possible_solution = create_solution(genes)
+        if(len(possible_solution) <= k_num):
+            population.append(possible_solution)
+        else:
+            while(len(possible_solution) > k_num):
+                possible_solution = create_solution(genes)
+                if(len(possible_solution) < k_num):
+                    population.append(possible_solution)
+                    break
+    return population
+
+population = create_n_cromossomo(array_of_genes, k_rotas, k_cap_max, 100)
+
+print(population[0][3])
+
+print(f'Número de cidades a serem atendidas: {n_genes}')
+print(f'Número de Veículos (número de rotas): {k_rotas}')
+print(f'Capacidade máxima do veículo: {k_cap_max}')
 
 
 # # plt.xkcd()  # deixar visual de quadrinho

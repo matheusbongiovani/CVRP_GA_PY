@@ -3,9 +3,9 @@ import time
 
 # ------------------ Genetic Algorithm
 # Gene: Corresponde a uma cidade, contendo as cordenadas X,Y e demanda
-# Subcromo: Corresponde a uma rota, feita por um veículo, contendo conjunto de Genes
-# -- Subcromo: [gene1, gene2, gene3] representando 1tour (rota feita por 1 veículo)
-# Cromossomo: Correseponde ao conjunto de tours feito por todos os veículos (solução do problema)
+# Cromossomo: Corresponde a uma rota, feita por um veículo, contendo conjunto de Genes
+# -- cromo: [gene1, gene2, gene3] representando 1tour (rota feita por 1 veículo)
+# Solution_cromos: Correseponde ao conjunto de tours feito por todos os veículos (solução do problema)
 # -- solution_cromos: [[gene1, gene2, gene3], [gene7, gene4, gene5], [gene8, gene6, gene9]] (0,2,1,3,0,7,4,5,0,8,6,9,0)
 # População: Conjunto de solution_cromos
 
@@ -44,7 +44,17 @@ class Gene(object):
         return self.y == other.y and self.x == other.x
 
 
-class Subcromo(object):
+# c0 = Node(0, 0)
+# c1 = Node(-1, -1)
+# c2 = Node(2, 2)
+# print(c1.distance(c2))
+# print(c1.distance_from_origin())
+# print(c1)
+# print(c2)
+# print(c1 == c2)
+
+
+class Cromossomo(object):
 
     def __init__(self, k=0):
         self.k = k  # representa o nº do veículo 'k'
@@ -57,7 +67,9 @@ class Subcromo(object):
 
     def getK(self):
         return int(self.k)
-        
+
+    def tour_add_gene(self, gene):
+        self.tour_genes.append(gene)
 
     def remove_gene_at_index(self, index=-1):
         return self.tour_genes.pop(index)
@@ -87,7 +99,7 @@ class Subcromo(object):
 
     def tour_fitness_with_depot(self, depot_node):
         dist_depot_to_first = depot_node.distance(self.tour_genes[0])
-        dist_intermed = Subcromo.tour_fitness_wout_depot(self)
+        dist_intermed = Cromossomo.tour_fitness_wout_depot(self)
         dist_depot_to_last = depot_node.distance(self.tour_genes[-1])
         return (dist_depot_to_first + dist_intermed + dist_depot_to_last)
 
@@ -95,12 +107,11 @@ class Subcromo(object):
         return self.tour_genes == other.set_of_genes
 
 
-class Cromossomo(object):
-    def __init__(self, genes_array, num_k, cap_k):
-        self.genes_array = genes_array
-        self.num_k = num_k
-
-        self.fitness_cost = 0
+class Solution_cromos(object):
+    def __init__(self):
+        self.conjunto_k = set()
+        self.cromos_in = []
+        sol_fitness = 0
 
     def add_cromo_to_sol(self, cromo):
         if cromo.getK not in self.conjunto_k:
