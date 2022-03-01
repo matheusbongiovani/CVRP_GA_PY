@@ -2,7 +2,6 @@ import sys
 import time
 import random
 import matplotlib.pyplot as plt
-import numpy as np
 
 #Classe Gene, que representa as cidades da instância.
 class Gene(object):
@@ -55,6 +54,9 @@ else:
     arg_size = sys.argv[2]
     arg_mutate = float(sys.argv[3])/100
     
+# arg_size = 64*2  # nºcidades-depot * 2
+
+time_to_execute = 300   # Tempo de execução do algoritmo em segundos
 
 header_array = []
 array_of_genes = []
@@ -151,6 +153,7 @@ matrix_distancias = func_matrix_distancias(array_of_genes)
 
 #modelo fitness_solution([9, 3, 0, 2, 4, 0, 5, 6, 0, 8, 7, 1]) == Cromossomo
 #os depots no meio do vetor já estão inseridos, precisamos adicionar o 1º e o último
+#[6, 5, 4, 3, 1, 2, 9, 8]
 def fitness(solution):
     cost = 0
     i = 0
@@ -160,6 +163,34 @@ def fitness(solution):
         cost += matrix_distancias[solution[i].getId()][solution[i+1].getId()]
         i += 1
     cost += matrix_distancias[solution[i].getId()][0] #último nó da última rota
+
+
+    i = 0
+    num_of_depots = 0
+    while i < len(solution):
+        if solution[i].id == 0:
+            num_of_depots += 1
+        i += 1
+    
+
+    if num_of_depots != k_rotas-1:
+        i = 0
+        weight = 0
+        penalty = 0
+        while i < len(solution):
+            weight += solution[i].z
+            if solution[i].z == 0:
+                if weight > k_cap_max:
+                    # penalty*50 performed better
+                    penalty += (weight - k_cap_max)*50
+                    cost += penalty
+                    weight = 0
+            i += 1
+
+
+    # resultado = solution.copy()
+    # resultado = solution.append(cost)
+
     return cost
 
 
@@ -211,7 +242,9 @@ def turn_feasible(cromo_entrada):
     def distribuir_demand(cromo_aux):
         crmo = cromo_aux.copy()
         total = 0.0
-        i = 0
+        i = 0   
+        
+        # modelo da solução: [3,1,2,6,4,5,7,8,9]
         while i < len(crmo):
             total += crmo[i].getZ()  #Se demanda de i exceder, o Depot é inserido imediatamente antes
             if total > k_cap_max:
@@ -355,14 +388,13 @@ def inicializar():
             best_solution_between_gens = best_solution
 
 
-        #putz os elementos da população tão uns 90% td iguais
-        if iteracoes_sem_melhora > 300:
-            vercaraPop = 0
-            break
+        # # ITERATIONS W_OUT IMPROVMENT ALTERNATIVE HALTING CONDITION, 
+        # if iteracoes_sem_melhora > 300:
+        #     break
         
         execution_time = time.time()
         time_elapsed = execution_time - start_time
-        if time_elapsed > 300:
+        if time_elapsed > time_to_execute:
             passsou = 0
             break
 
@@ -373,7 +405,7 @@ def inicializar():
 
     print('-----------------------------------------------------------------------------')
     print(f'num de iterações: {index_geracao_atual}, iterações sem melhora:{iteracoes_sem_melhora}, prob_mutate:{mutate_prob}')
-    print(f'fitness melhor de todos:{fitness(best_solution_between_gens)}, fitness melhor geração atual: {fitness(best_solution)}')
+    print(f'fitness melhor entre todas gerações:{fitness(best_solution_between_gens)}, melhor fitness atual: {fitness(best_solution)}')
 
     return best_solution_between_gens
 
@@ -389,21 +421,23 @@ def check_population_total_demand(solution):
     return total_demand
 
 
-# print_genes_list(array_of_genes)
 
-rota1 = [array_of_genes[1], array_of_genes[10],array_of_genes[5]]
+plot_sol = best_reached_solution.copy()
+plot_sol.insert(0,array_of_genes[0])
+num_exato_rotas = plot_sol.count(array_of_genes[0])
+if num_exato_rotas != k_rotas:
+    print('NOT ENOUGH TIME TO FIND A FEASIBLE SOLUTION!')
+    print('CURRENT SOLUTION PROBABLY USES MORE VEHICLES THAN THE MINIMUM POSSIBLE!')
+    print('TRY RUNNING FOR A LONGER PERIOD OR WITH DIFFERENT PARAMETERS')
+print(f'num of vehicles used in solution: {num_exato_rotas}')
+plot_sol.append(array_of_genes[0])
 
 
-print('demanda total:',population_total_demand(array_of_genes))
-
-
-print(f'Número de cidades a serem atendidas: {n_genes}')
-print(f'Número de Veículos (número de rotas): {k_rotas}')
+print(f'Número Mínimo de Veículos(rotas): {k_rotas}')
 print(f'Capacidade máxima do veículo: {k_cap_max}')
-
-
-
 print(f'demanda das rotas {route_demand(best_reached_solution)}')
+print(f'Número de cidades a serem atendidas: {n_genes}')
+print('demanda total das cidadeds:',population_total_demand(array_of_genes))
 
 
 
@@ -417,9 +451,6 @@ plt.scatter(array_of_genes[0].x, array_of_genes[0].y, s=35, c='black')
 #     for rota in solution:
 #         plt.plot(x_values(rota),y_values(rota))
 
-plot_sol = best_reached_solution.copy()
-plot_sol.insert(0,array_of_genes[0])
-plot_sol.append(array_of_genes[0])
 
 print(f'plot_sol: {plot_sol}, fitness:{fitness(best_reached_solution)}')
 list_to_plot = []
