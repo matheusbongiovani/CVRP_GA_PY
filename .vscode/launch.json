@@ -11,9 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "A-n65-k9.vrp",
-                "100",
-                "5"
+                "A-n65-k9.vrp"
             ]
         }
     ]

@@ -3,23 +3,23 @@ import time
 import random
 import matplotlib.pyplot as plt
 
-#Classe Gene, que representa as cidades da instância.
+
+# Classe Gene, que representa as cidades da instância.
 class Gene(object):
-    def __init__(self, x=0, y=0, z=0, id=0):
+    def __init__(self, id=0, x=0, y=0, demand=0):
+        self.id = id
         self.x = x
         self.y = y
-        self.z = z
-        self.id = id
-    # Posteriormente anexado à matriz de distancias reduzindo contas repitidas
+        self.demand = demand
+
     def distance(self, p):
         dx = self.x - p.x
         dy = self.y - p.y
         return ((dx**2) + (dy**2))**0.5
 
-
     def __str__(self):
         return 'id:' + str(self.id) + ' (' + str(self.x) + ',' + str(
-            self.y) + ')' + ' demand:' + str(self.z)
+            self.y) + ')' + ' demand:' + str(self.demand)
     
     def __repr__(self):
         return str(self.id)
@@ -30,27 +30,21 @@ class Gene(object):
     def __lt__(self, other):
         return ((self.id) < (other.id))
 
-
 start_time = time.time()
-# cada meta-heurística possui um conjunto de parâmetros cujos
-# valores devem ser fornecidos pela entrada
+
+# leitura dos argumentos do terminal
 if len(sys.argv) != 2:
     print('----------------------ERROR----------------------')
-    print('Sintaxe: python3 "program.py" "instância.vrp" "população" "prob mutação(%)" ')
+    print('Sintaxe: python3 "program.py" "instância.vrp"')
     sys.exit('-------------------------------------------------')
 else:
-    arg1 = sys.argv[1]
-    arg_mutate = 5/100
-    
-# arg_size = 64*2  # nºcidades-depot * 2
+    arg_entrada = sys.argv[1]
 
-time_to_execute = 30   # Tempo de execução do algoritmo em segundos
-
+# leitura do arquivo de entrada:
 header_array = []
 array_of_genes = []
-
 index_entrada = 0
-with open(arg1, mode='r', encoding='utf-8') as file:
+with open(arg_entrada, mode='r', encoding='utf-8') as file:
     num_linha = 0
     gene_coord_bool = False
     demand_section_bool = False
@@ -74,9 +68,8 @@ with open(arg1, mode='r', encoding='utf-8') as file:
                 gene_coord_bool = False
                 demand_section_bool = True
             else:
-                split_id_XY = linha.split()
-                node = Gene(float(split_id_XY[1]), float(
-                    split_id_XY[2]), id=(int(split_id_XY[0])-1))
+                id, x, y = linha.split()
+                node = Gene(int(id) - 1, float(x), float(y))
                 array_of_genes.append(node)
 
         # trecho para inserir a demanda de cada nó no vetor array_of_genes
@@ -86,38 +79,23 @@ with open(arg1, mode='r', encoding='utf-8') as file:
             if linha.find('DEPOT_SECTION') != -1:
                 demand_section_bool = False
             else:
-                splitZ = linha.split()
-                array_of_genes[index_entrada].z = float(splitZ[1])
+                _, demand = linha.split()
+                array_of_genes[index_entrada].demand = float(demand)
                 index_entrada += 1
 # ---- fim da leitura da entrada ----
 
+num_genes = len(array_of_genes) 
+num_elem_pop = (num_genes-1) * 2  # nº elementos na população = nºcidades-depot * 2
 
-n_genes = index_entrada  # len(array_of_genes)
-arg_size = (n_genes-1)*2
+# k_rotas: nº de veículos passado pela entrada
+k_rotas = header_array[0].split('-k') # "NAME:B-n78" -k "10"
+k_rotas = int(k_rotas[1]) # "10"
 
+k_cap_max = float(header_array[5]) # capacidade máx dos veículos
 
-# obter valor K, que representa o número de veículos dado pela entrada
-k_rotas = header_array[0].split('-k')
-k_rotas = int(k_rotas[1])
-k_cap_max = float(header_array[5])
+time_to_execute = 60   # Tempo de execução do algoritmo em segundos
 
-
-def print_genes_list(genes_list):
-    for gene in genes_list:
-        print(gene.__str__())
-
-
-def x_values(genes_list):
-    list_x = []
-    for gene in genes_list:
-        list_x.append(gene.x)
-    return list_x
-    
-def y_values(genes_list):
-    list_y = []
-    for gene in genes_list:
-        list_y.append(gene.y)
-    return list_y    
+mutate_prob = 0.05
 
 
 def func_matrix_distancias(genes):
@@ -132,9 +110,6 @@ def func_matrix_distancias(genes):
 
 matrix_distancias = func_matrix_distancias(array_of_genes)
 
-
-#modelo fitness_solution([9, 3, 0, 2, 4, 0, 5, 6, 0, 8, 7, 1]) == Cromossomo
-#os depots no meio do vetor já estão inseridos, precisamos adicionar o 1º e o último
 def fitness(solution):
     cost = 0
     i = 0
@@ -145,36 +120,34 @@ def fitness(solution):
         i += 1
     cost += matrix_distancias[solution[i].id][0] #último nó da última rota
 
-    num_rotas_solucao = solution.count(array_of_genes[0]) +1
+    num_rotas_solucao = solution.count(array_of_genes[0])
     
-    if num_rotas_solucao != k_rotas:
-        i = 0
+    if num_rotas_solucao != k_rotas-1:
         weight = 0
         penalty = 0
-        while i < len(solution):
-            weight += solution[i].z
-            if solution[i].z == 0:
+        for cidade in solution:
+            weight += cidade.demand
+            if cidade.demand == 0:
                 if weight > k_cap_max:
                     # penalty*50 performed better
                     penalty += (weight - k_cap_max)*50
                     cost += penalty
                     weight = 0
-            i += 1
+
+    # resultado = solution.copy()
+    # resultado = solution.append(cost)
 
     return cost
 
-# tornar a solução factível, fazendo com que atenda as restrições do problema.
-# solução inicial sempre vai ser factivel... Aplicar ela após mut/cross
+
+
+
 def turn_feasible(cromo_entrada):
     genes_seq_entrada = array_of_genes.copy()
     genes_seq_entrada.pop(0)  # array com todas as cidades exceto o depot
     cromo = cromo_entrada.copy()
-    
-    # [1,2,3,0,1,2,4,0,2,1,1]
-    
-    for each in cromo:
-        if each.id == 0:
-            cromo.remove(each)
+        
+    cromo = [c for c in cromo if c.id != 0]
     
     # Trecho para remover eventuais cidades duplicadas e faltando, devido as mutações/crossOver
     adjust = True
@@ -199,103 +172,29 @@ def turn_feasible(cromo_entrada):
     total = 0.0
     i = 0   
     while i < len(cromo):
-        total += cromo[i].z  #Se demanda de i exceder, o Depot é inserido imediatamente antes
+        total += cromo[i].demand  #Se demanda de i exceder, o Depot é inserido imediatamente antes
         if total > k_cap_max:
             cromo.insert(i, array_of_genes[0])
-            total = 0.0
+            total = 0
         i += 1
+        
         
     return cromo
 
-def create_initial_population(genes_entrada, pop_size):
-    population = []
-    genes = genes_entrada.copy()
-    genes.pop(0)  # dado a entrada, retiramos o depot
-
-    for _ in range(int(pop_size)):
-        randomized = random.sample(genes, len(genes))
-        randomized = turn_feasible(randomized)
-        population.append(randomized)
-
-    return population
 
 
-# modelo da entrada: [3,1,2,6,4,5,7,8,9]
-def create_new_population(pop_inicial, mutate_prob=0.05):
-    pop = pop_inicial.copy()
-    new_pop = []
-
-    # mutação de inverter trecho do vetor
-    def mutation(cromo, prob_mutate):
-        if random.random() < float(prob_mutate):
-
-            index1 = random.randrange(0,len(cromo))
-            index2 = random.randrange(index1,len(cromo))
-            
-            mid = cromo[index1:index2]
-            mid.reverse()
-            
-            result = cromo[0:index1] + mid + cromo[index2:]
-            return result     
-        else:
-            return cromo 
-
-    def tournament_select_two(old_pop):
-        def best_fit_parents():
-            selecteds = []
-            num_selects = int(len(old_pop)/10) # selecionar num_pop/10 elems.
-            candidates = random.sample(old_pop, num_selects)
-            best = 999999999  # very large number to always have a better fitness
-            for cromo in candidates:
-                fitness_value = fitness(cromo)
-                if fitness_value < best:
-                    selecteds.append(cromo)
-                    best = fitness_value
-            best_cromo = selecteds.pop()
-            return best_cromo
-        
-        parent1 = best_fit_parents()
-        parent2 = best_fit_parents()
-        
-        return [parent1, parent2]
-    
-    def crossover_mutate_and_add_to_new_generation(parent1, parent2):
-        # filhos serão construídos através de cortes nos vetores dos pais
-        cut1, cut2 = random.randrange(len(parent1)), random.randrange(len(parent2))
-        cut1, cut2 = min(cut1, cut2), max(cut1, cut2)
-
-        child1 = parent1[:cut1] + parent2[cut1:cut2] + parent1[cut2:]
-        child2 = parent2[:cut1] + parent1[cut1:cut2] + parent2[cut2:]
-
-
-        child1 = mutation(child1, mutate_prob)
-        child1 = mutation(child1, mutate_prob)
-
-        child1 = turn_feasible(child1)
-        child2 = turn_feasible(child2)
-
-        new_pop.append(child1)
-        new_pop.append(child2)
-
-    # Para termos a população constante, iteramos o tamanho da população divido por 2
-    # já que em cada iteração são gerado 2 membros da nova geração
-    tamanhoSobreDois = int(len(pop)/2)
-    for _ in range(tamanhoSobreDois):
-        parent1, parent2 = tournament_select_two(pop)
-        crossover_mutate_and_add_to_new_generation(parent1, parent2)
-
-    return new_pop
-
-
+array_of_best_fitness = [] # vetor para armazenar o melhor fitness de cada geração
 def inicializar():
-    population = create_initial_population(array_of_genes,arg_size)
+    population = create_initial_population(array_of_genes, num_elem_pop)
 
     index_geracao_atual = 0
     iteracoes_sem_melhora = 0
     num_iteracoes_melhor_solucao = 0
-    best_solution_global = population[0] #tem que iniciar com algum valor
+    best_solution_global = None
     best_fitness_global = 99999999999
+    best_solution_atual = None  
     best_fitness_atual = 99999999999
+
     execution_time = time.time()
 
     while True:
@@ -305,13 +204,14 @@ def inicializar():
         best_solution_atual = None
 
         # Passar a salvar custo das iterações (best fitness) para gerar gráficos
-        # é bom saber também exatamente qual iteração obteve o melhor fitness...
         for solution in population:
             fit_value = fitness(solution)
             if fit_value < best_fitness_atual:
                 best_fitness_atual = fit_value
                 best_solution_atual = solution
         
+        array_of_best_fitness.append(best_fitness_atual)
+
         if best_fitness_atual >= best_fitness_global:
             iteracoes_sem_melhora += 1
             mutate_prob += 0.01
@@ -323,11 +223,9 @@ def inicializar():
             iteracoes_sem_melhora = 0
             mutate_prob = 0.05
 
-
         # se tiver 100 iterações sem melhora, reseta prob. de mutação
         if iteracoes_sem_melhora > 100:
             mutate_prob = 0.05
-
 
         # Checar o tempo de execução para anteder a condição de parada
         execution_time = time.time()
@@ -339,6 +237,7 @@ def inicializar():
     print('-----------------------------------------------------------------------------')
     print(f'fitness melhor entre todas gerações:{fitness(best_solution_global)}, melhor fitness atual: {fitness(best_solution_atual)}')
     print(f'num de iterações: {index_geracao_atual}, iterações sem melhora:{iteracoes_sem_melhora}, iterações pra melhor solução: {num_iteracoes_melhor_solucao}, tempo de exc da melhor solução: {time_to_best_solution}')
+    print('-----------------------------------------------------------------------------')
 
     return best_solution_global
 
@@ -352,23 +251,25 @@ print("Tempo de execução:", end_time-start_time)
 # # # ----------------------------------------
 
 
-##---------------------------PLOTING ZONE------------------------
-def route_demands(solution):
-    rotas = solution.copy()
-    demanda_rotas = []
-    demanda = 0.0
-    for gene in rotas:
-        demanda += gene.z
-        if gene.id == 0 and demanda != 0:
-            demanda_rotas.append(demanda)
-            demanda = 0
-    demanda_rotas.append(demanda)
-    return demanda_rotas
+##---------------------------Report Section------------------------
 
 plot_sol = best_reached_solution.copy()
 plot_sol.insert(0,array_of_genes[0])
 num_veiculos_usados_na_solucao = plot_sol.count(array_of_genes[0])
 plot_sol.append(array_of_genes[0])
+
+def route_demands(solution):
+    rotas = solution.copy()
+    demanda_rotas = []
+    demanda = 0.0
+    for gene in rotas:
+        demanda += gene.demand
+        if gene.id== 0 and demanda != 0:
+            demanda_rotas.append(demanda)
+            demanda = 0
+    demanda_rotas.append(demanda)
+    return demanda_rotas
+
 
 if num_veiculos_usados_na_solucao != k_rotas:
     print('NOT ENOUGH TIME TO FIND A FEASIBLE SOLUTION!')
@@ -379,32 +280,27 @@ print(f'num of vehicles used in solution: {num_veiculos_usados_na_solucao}')
 print(f'Número mínimo de veículos(rotas): {k_rotas}')
 print(f'Capacidade máxima do veículo: {k_cap_max}')
 print(f'Demanda das rotas {route_demands(best_reached_solution)}')
-cities_sum_demands = sum([gene.z for gene in array_of_genes])
+cities_sum_demands = sum([gene.demand for gene in array_of_genes])
 print(f'Demanda total das cidades: {cities_sum_demands}')
 
-
-
-# # # # # plt.xkcd()  # deixar visual de quadrinho
 # # # ----------- plot section---------------
-plt.grid(False)
-plt.scatter(x_values(array_of_genes), y_values(
-    array_of_genes), s=20, c='blue')
-plt.scatter(array_of_genes[0].x, array_of_genes[0].y, s=35, c='black')
-# def plot_solution(solution):
-#     for rota in solution:
-#         plt.plot(x_values(rota),y_values(rota))
 
+x_gene_list = [gene.x for gene in array_of_genes]
+y_gene_list = [gene.y for gene in array_of_genes]
 
-print(f'plot_sol: {plot_sol}, fitness:{fitness(best_reached_solution)}')
+plt.scatter(x_gene_list, y_gene_list, s=20, c='blue')
+plt.scatter(array_of_genes[0].x, array_of_genes[0].y, s=35, c='red')
+
+print(f'COST:{fitness(best_reached_solution)}, SOLUTION:')
+print(plot_sol)
 list_to_plot = []
 for each in plot_sol:
     list_to_plot.append(each)
     if each.id == 0:
         list_to_plot.append(array_of_genes[0])
-        plt.plot(x_values(list_to_plot),y_values(list_to_plot))
+        x_list = [gene.x for gene in list_to_plot]
+        y_list = [gene.y for gene in list_to_plot]   
+        plt.plot(x_list, y_list)
         list_to_plot.clear()
         list_to_plot.append(array_of_genes[0])
-
-
 plt.show()
-
