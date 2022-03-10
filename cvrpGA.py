@@ -94,7 +94,7 @@ k_cap_max = float(header_array[5])
 
 initial_mutate_prob = 0.05  # mutação padrão de 5%
 num_elem_pop = (n_genes-1)*2  # nºcidades-depot * 2
-time_to_execute = 300   # Tempo de execução do algoritmo em segundos
+time_to_execute = 3   # Tempo de execução do algoritmo em segundos
 
 
 def func_matrix_distancias(genes):
@@ -394,15 +394,18 @@ for each in plot_sol:
         list_to_plot.clear()
         list_to_plot.append(array_of_genes[0])
 
+resformat = "{:.2f}".format(array_of_best_fitness[-1])
+plt.legend(["cost: " + resformat], loc="upper right", )
+
 plt.show()
 
-# ### Grático para plotar extra A-n32...
-# plt.xkcd()
-# fitness_final = array_of_best_fitness[-1]
-# # plt.grid()
-# plt.ylim(fitness_final-250,fitness_final+250)
-# stringBestcost = "Obtida:" + str(array_of_best_fitness[-1])
-# plt.plot(array_of_best_fitness, color='g', label=stringBestcost)
-# plt.axhline(y=784, color='b', linestyle='-', label="Melhor: 784")
-# plt.legend(loc="upper right")
-# plt.show()
+### Grático para plotar extra A-n32...
+plt.xkcd()
+fitness_final = array_of_best_fitness[-1]
+# plt.grid()
+plt.ylim(fitness_final-250,fitness_final+250)
+stringBestcost = "Obtida: " + str("{:.2f}".format(array_of_best_fitness[-1]))
+plt.plot(array_of_best_fitness, color='g', label=stringBestcost)
+plt.axhline(y=784, color='b', linestyle='-', label="Melhor: 784")
+plt.legend(loc="upper right")
+plt.show()
