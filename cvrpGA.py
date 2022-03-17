@@ -94,7 +94,7 @@ k_cap_max = float(header_array[5])
 
 initial_mutate_prob = 0.05  # mutação padrão de 5%
 num_elem_pop = (n_genes-1)*2  # nºcidades-depot * 2
-time_to_execute = 3   # Tempo de execução do algoritmo em segundos
+time_to_execute = 300   # Tempo de execução do algoritmo em segundos
 
 
 def func_matrix_distancias(genes):
@@ -110,10 +110,35 @@ def func_matrix_distancias(genes):
 matrix_distancias = func_matrix_distancias(array_of_genes)
 
 
+def removeZeros(cromo):
+    for each in cromo:
+        if each.id == 0:
+            cromo.remove(each)
+
+def distribuirZerosNaSol(cromo):
+    i = 0
+    total = 0
+    while i < len(cromo):
+        total += cromo[i].demand  #Se demanda de i exceder, o Depot é inserido imediatamente antes
+        if total > k_cap_max:
+            cromo.insert(i, array_of_genes[0])
+            total = 0
+        i += 1
+
+def removerZerosDolado(cromo):
+    i = 0
+    while i<(len(cromo)-1):
+        if cromo[i].id == 0 and cromo[i+1].id==0:
+            del cromo[i]
+            continue
+        i += 1
+
 #modelo fitness_solution([9, 3, 0, 2, 4, 0, 5, 6, 0, 8, 7, 1]) == Cromossomo
 #os depots no meio do vetor já estão inseridos, precisamos adicionar o 1º e o último
 #[6, 5, 4, 3, 1, 2, 9, 8]
 def fitness(solution):
+
+    removerZerosDolado(solution)
     cost = 0
     i = 0
 
@@ -126,6 +151,7 @@ def fitness(solution):
 #  Checar nº de rotas, e aplicar penalidade caso exceda capacidade máxima
     i = 0
     num_of_depots = 1
+
     while i < len(solution):
         if solution[i].id == 0:
             num_of_depots += 1
@@ -146,18 +172,16 @@ def fitness(solution):
             i += 1
     return cost
 
+genes_seq_entrada = array_of_genes.copy()
+genes_seq_entrada.pop(0)  # array com todas as cidades exceto o depot
 def turn_feasible(cromo_entrada):
-    genes_seq_entrada = array_of_genes.copy()
-    genes_seq_entrada.pop(0)  # array com todas as cidades exceto o depot
     cromo = cromo_entrada.copy()
 
-    for each in cromo:
-        if each.id == 0:
-            cromo.remove(each)
+    removeZeros(cromo)
 
-    duplicates = True
-    while duplicates:
-        duplicates = False
+    adjust = True
+    while adjust:
+        adjust = False
         for i1 in range(len(cromo)):
             for i2 in range(i1):
                 if cromo[i1] == cromo[i2]:
@@ -169,19 +193,16 @@ def turn_feasible(cromo_entrada):
                             break
                     if noDuplicates:
                         del cromo[i1]
-                    duplicates = True
-                if duplicates: break
-            if duplicates: break
+                    adjust = True
+                if adjust: break
+            if adjust: break
 
     # separar cidades em rotas quando o veículo não conseguir carregar demanda da próx cidade
     total = 0.0
     i = 0   
-    while i < len(cromo):
-        total += cromo[i].demand  #Se demanda de i exceder, o Depot é inserido imediatamente antes
-        if total > k_cap_max:
-            cromo.insert(i, array_of_genes[0])
-            total = 0
-        i += 1
+
+    distribuirZerosNaSol(cromo)
+    # removerZerosDolado(cromo)  
     
     return cromo
 
@@ -238,13 +259,27 @@ def tournament_select_two(old_pop):
 
 def crossover(parents):
     # filhos serão construídos através de cortes nos vetores dos pais
-    cut1, cut2 = random.randrange(len(parents)), random.randrange(len(parents))
+
+    pai1 = parents[0]
+    pai2 = parents[1]
+    removeZeros(pai1)
+    removeZeros(pai2)
+
+    leen = min(len(pai1),len(pai2))
+    cut1, cut2 = random.randrange(leen), random.randrange(leen)
+
     cut1, cut2 = min(cut1, cut2), max(cut1, cut2)
 
-    child1 = parents[0][:cut1] + parents[1][cut1:cut2] + parents[0][cut2:]
-    child2 = parents[1][:cut1] + parents[0][cut1:cut2] + parents[1][cut2:]
+    child1 = pai1[:cut1] + pai2[cut1:cut2] + pai1[cut2:]
+    child2 = pai2[:cut1] + pai1[cut1:cut2] + pai2[cut2:]
+    
+    distribuirZerosNaSol(pai1)
+    distribuirZerosNaSol(pai2)
 
-    return [child1, child2]
+    distribuirZerosNaSol(child1)
+    distribuirZerosNaSol(child2)
+
+    return child1, child2
 
 def create_new_population(pop_entrada, prob_mutate):
     pop = pop_entrada.copy()
@@ -297,11 +332,12 @@ def inicializar():
                 best_fitness_atual = fit_value
                 best_solution_atual = solution
 
-        array_of_best_fitness.append(best_fitness_global)
+        array_of_best_fitness.append(best_fitness_atual)
         
         if best_fitness_atual >= best_fitness_global:
             iteracoes_sem_melhora += 1
             current_mutate_prob += 0.01
+
         else:
             best_solution_global = best_solution_atual
             best_fitness_global = best_fitness_atual
@@ -399,13 +435,13 @@ plt.legend(["cost: " + resformat], loc="upper right", )
 
 plt.show()
 
-### Grático para plotar extra A-n32...
-plt.xkcd()
-fitness_final = array_of_best_fitness[-1]
-# plt.grid()
-plt.ylim(fitness_final-250,fitness_final+250)
-stringBestcost = "Obtida: " + str("{:.2f}".format(array_of_best_fitness[-1]))
-plt.plot(array_of_best_fitness, color='g', label=stringBestcost)
-plt.axhline(y=784, color='b', linestyle='-', label="Melhor: 784")
-plt.legend(loc="upper right")
-plt.show()
+# ### Grático para plotar extra A-n32...
+# plt.xkcd()
+# fitness_final = array_of_best_fitness[-1]
+# # plt.grid()
+# plt.ylim(fitness_final-250,fitness_final+250)
+# stringBestcost = "Obtida: " + str("{:.2f}".format(array_of_best_fitness[-1]))
+# plt.plot(array_of_best_fitness, color='g', label=stringBestcost)
+# plt.axhline(y=784, color='b', linestyle='-', label="Melhor: 784")
+# plt.legend(loc="upper right")
+# plt.show()
