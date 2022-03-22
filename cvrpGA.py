@@ -31,8 +31,7 @@ class Gene(object):
 
 
 start_time = time.time()
-# cada meta-heurística possui um conjunto de parâmetros cujos
-# valores devem ser fornecidos pela entrada
+
 if len(sys.argv) != 2:
     print('----------------------ERROR----------------------')
     print('Sintaxe: python3 "program.py" "instância.vrp" ')
@@ -93,7 +92,7 @@ k_rotas = int(k_rotas[1])
 k_cap_max = float(header_array[5])
 
 initial_mutate_prob = 0.05  # mutação padrão de 5%
-num_elem_pop = (n_genes-1)*2  # nºcidades-depot * 2
+num_elem_pop = (n_genes-1)*2  # nºcidades * 2
 time_to_execute = 300   # Tempo de execução do algoritmo em segundos
 
 
@@ -142,11 +141,16 @@ def fitness(solution):
     cost = 0
     i = 0
 
-    cost += matrix_distancias[0][solution[0].id]  #1º nó da 1ª rota
+    # Distância do Depot até a 1ª cidade da 1ª rota
+    cost += matrix_distancias[0][solution[0].id]
+
+    # Distância entre as cidades no vetor da solução.
     for _ in range(len(solution)-1):
         cost += matrix_distancias[solution[i].id][solution[i+1].id]
         i += 1
-    cost += matrix_distancias[solution[i].id][0] #último nó da última rota
+
+    # Distância da última cidade da última rota até o Depot
+    cost += matrix_distancias[solution[i].id][0]
 
 #  Checar nº de rotas, e aplicar penalidade caso exceda capacidade máxima
     i = 0
@@ -306,7 +310,7 @@ def create_new_population(pop_entrada, prob_mutate):
 
 
 array_of_best_fitness = [] # vetor para armazenar o melhor fitness de cada geração
-def inicializar():
+def runGeneticAlgorithm():
     population = create_initial_population(array_of_genes, num_elem_pop)
     current_mutate_prob = initial_mutate_prob
 
@@ -317,9 +321,10 @@ def inicializar():
     best_fitness_global = 99999999999
     best_solution_atual = None  
     best_fitness_atual = 99999999999
+    hardReset = 0
+    numHardReset = 0
 
     execution_time = time.time()
-
     while True:
         population = create_new_population(population, current_mutate_prob)
         index_geracao_atual += 1
@@ -334,10 +339,14 @@ def inicializar():
 
         array_of_best_fitness.append(best_fitness_atual)
         
-        if best_fitness_atual >= best_fitness_global:
+        if(best_fitness_atual >= best_fitness_global):
             iteracoes_sem_melhora += 1
             current_mutate_prob += 0.01
-
+            hardReset += 1
+            if (hardReset > 1000):
+                numHardReset += 1
+                hardReset = 0
+                current_mutate_prob = initial_mutate_prob
         else:
             best_solution_global = best_solution_atual
             best_fitness_global = best_fitness_atual
@@ -351,23 +360,22 @@ def inicializar():
         execution_time = time.time()
         time_elapsed = execution_time - start_time
         if time_elapsed > time_to_execute:
+            end_time = time.time()
+            print(f"Tempo de Execução do Algoritmo: {str(round(end_time-start_time, 2))}s")
             break
 
 
-    print('-----------------------------------------------------------------------------')
-    print(f'fitness melhor entre todas gerações:{fitness(best_solution_global)}, melhor fitness atual: {fitness(best_solution_atual)}')
-    print(f'num de iterações: {index_geracao_atual}, iterações sem melhora:{iteracoes_sem_melhora}, iterações pra melhor solução: {num_iteracoes_melhor_solucao}, tempo de exc da melhor solução: {time_to_best_solution}')
-    print('-----------------------------------------------------------------------------')
+    print("------------------------------------------------------------------------------------------------------------------------------------")
+    print(f'Melhor fitness entre todas gerações:{fitness(best_solution_global)} -- Melhor fitness da geração atual: {fitness(best_solution_atual)} -- nº de Hard Resests na população: {numHardReset} ')
+    print(f'Nº de iterações: {index_geracao_atual}, iterações sem melhora:{iteracoes_sem_melhora}, Iterações pra melhor solução: {num_iteracoes_melhor_solucao}, Tempo de exc da melhor solução: {time_to_best_solution}')
+    print("------------------------------------------------------------------------------------------------------------------------------------")
 
     return best_solution_global
 
-
-best_reached_solution = inicializar()
-
-# # # ----------------------------------------
-end_time = time.time()
-print("Tempo de execução:", end_time-start_time)
-# # # ----------------------------------------
+#---------------------------------------------------------------------------
+#EXECUTAR ALGORITMO: runGeneticAlgorithm()  Retorno: vetor da melhor solução
+best_reached_solution = runGeneticAlgorithm()
+#---------------------------------------------------------------------------
 
 def route_demands(solution):
     rotas = solution.copy()
@@ -399,18 +407,16 @@ plot_sol.insert(0,array_of_genes[0])
 num_exato_rotas = plot_sol.count(array_of_genes[0])
 plot_sol.append(array_of_genes[0])
 if num_exato_rotas != k_rotas:
-    print('NOT ENOUGH TIME TO FIND A FEASIBLE SOLUTION!')
-    print('CURRENT SOLUTION PROBABLY USES MORE VEHICLES THAN THE MINIMUM POSSIBLE!')
-    print('TRY RUNNING FOR A LONGER PERIOD OR WITH DIFFERENT PARAMETERS')
+    print('NÃO FOI POSSÍVEL ACHAR UMA SOLUÇÃO FACTÍVEL UTILIZANDO O Nº MÍNIMO DE VEÍCULOS DISPONÍVEIS')
+    print(f'Nº MÍNIMO DE VEÍCULOS DISPONÍVEIS:{k_rotas}')
+    print(f'VEÍCULOS UTILIZADOS NESTA SOLUÇÃO:{num_exato_rotas}')
 
 
-print(f'Número de Veículos utilizados: {num_exato_rotas}')
-print(f'Número Mínimo de Veículos(rotas) possível: {k_rotas}')
-print(f'Capacidade máxima do veículo: {k_cap_max}')
-print(f'demanda das rotas {route_demands(best_reached_solution)}')
-print(f'Número de cidades a serem atendidas: {n_genes}')
-cities_sum_demands = sum([gene.demand for gene in array_of_genes])
-print('demanda total das cidadeds:',cities_sum_demands)
+# print(f'Capacidade máxima dos veículos: {k_cap_max} -- Carga em cada rota: {route_demands(best_reached_solution)}')
+# print(f'demanda das rotas {route_demands(best_reached_solution)}')
+# print(f'Número de cidades a serem atendidas: {n_genes}')
+# cities_sum_demands = sum([gene.demand for gene in array_of_genes])
+# print('demanda total das cidadeds:',cities_sum_demands)
 
 
 # # # ----------- plot section---------------
@@ -419,7 +425,7 @@ plt.scatter(x_values(array_of_genes), y_values(
     array_of_genes), s=20, c='blue')
 plt.scatter(array_of_genes[0].x, array_of_genes[0].y, s=35, c='black')
 
-print(f'COST:{fitness(best_reached_solution)}, SOLUTION:')
+print(f'CUSTO:{fitness(best_reached_solution)}, SOLUÇÃO:')
 print(plot_sol)
 list_to_plot = []
 for each in plot_sol:
@@ -431,11 +437,15 @@ for each in plot_sol:
         list_to_plot.append(array_of_genes[0])
 
 resformat = "{:.2f}".format(array_of_best_fitness[-1])
-plt.legend(["cost: " + resformat], loc="upper right", )
+plt.legend(["custo: " + resformat], loc="upper right", )
+
+print("------------------------------------------------------------------------------------------------------------------------------------")
+print(f'Capacidade máxima dos veículos: {k_cap_max} -- Carga em cada rota: {route_demands(best_reached_solution)}')
+
 
 plt.show()
 
-# ### Grático para plotar extra A-n32...
+# ### Seção para plotar informações adicionais para a instância A-n32-k5.vrp
 # plt.xkcd()
 # fitness_final = array_of_best_fitness[-1]
 # # plt.grid()
