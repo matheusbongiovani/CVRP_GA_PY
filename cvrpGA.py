@@ -269,7 +269,7 @@ def crossover(parents):
     removeZeros(pai1)
     removeZeros(pai2)
 
-    leen = min(len(pai1),len(pai2))
+    leen = n_genes-1 #nº cidades sem o depot
     cut1, cut2 = random.randrange(leen), random.randrange(leen)
 
     cut1, cut2 = min(cut1, cut2), max(cut1, cut2)
