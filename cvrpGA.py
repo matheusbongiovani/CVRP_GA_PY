@@ -321,8 +321,6 @@ def runGeneticAlgorithm():
     best_fitness_global = 99999999999
     best_solution_atual = None  
     best_fitness_atual = 99999999999
-    hardReset = 0
-    numHardReset = 0
 
     execution_time = time.time()
     while True:
@@ -341,12 +339,7 @@ def runGeneticAlgorithm():
         
         if(best_fitness_atual >= best_fitness_global):
             iteracoes_sem_melhora += 1
-            current_mutate_prob += 0.01
-            hardReset += 1
-            if (hardReset > 1000):
-                numHardReset += 1
-                hardReset = 0
-                current_mutate_prob = initial_mutate_prob
+            current_mutate_prob += 0.001
         else:
             best_solution_global = best_solution_atual
             best_fitness_global = best_fitness_atual
@@ -366,7 +359,7 @@ def runGeneticAlgorithm():
 
 
     print("------------------------------------------------------------------------------------------------------------------------------------")
-    print(f'Melhor fitness entre todas gerações:{fitness(best_solution_global)} -- Melhor fitness da geração atual: {fitness(best_solution_atual)} -- nº de Hard Resests na população: {numHardReset} ')
+    print(f'Melhor fitness entre todas gerações:{fitness(best_solution_global)} -- Melhor fitness da geração atual: {fitness(best_solution_atual)}')
     print(f'Nº de iterações: {index_geracao_atual}, iterações sem melhora:{iteracoes_sem_melhora}, Iterações pra melhor solução: {num_iteracoes_melhor_solucao}, Tempo de exc da melhor solução: {time_to_best_solution}')
     print("------------------------------------------------------------------------------------------------------------------------------------")
 
