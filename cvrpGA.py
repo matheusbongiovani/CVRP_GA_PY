@@ -92,7 +92,7 @@ k_rotas = int(k_rotas[1])
 k_cap_max = float(header_array[5])
 
 initial_mutate_prob = 0.05  # mutação padrão de 5%
-num_elem_pop = (n_genes-1)*2  # nºcidades * 2
+num_elem_pop = n_genes*2  # nºcidades * 2
 time_to_execute = 300   # Tempo de execução do algoritmo em segundos
 
 
