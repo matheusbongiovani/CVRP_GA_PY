@@ -244,9 +244,9 @@ def mutation(cromo, prob_mutate=0.05):
 def tournament_select_two(old_pop):
     def best_fit_parents():
         selecteds = []
-        num_selects = int(len(old_pop)/10) # limitar pop mín em torno de 10 elems.
+        num_selects = int(len(old_pop)/10) # seleciona 1/10 da população aleatóriamente
         candidates = random.sample(old_pop, num_selects)
-        best = 999999999  # very large number to always have a better fitness
+        best = 999999999  # inicialização da variável com valor alto, para ser atualizado.
         for cromo in candidates:
             fitness_value = fitness(cromo)
             if fitness_value < best:
