@@ -132,30 +132,23 @@ def removerZerosDolado(cromo):
             continue
         i += 1
 
-#modelo fitness_solution([9, 3, 0, 2, 4, 0, 5, 6, 0, 8, 7, 1]) == Cromossomo
-#os depots no meio do vetor já estão inseridos, precisamos adicionar o 1º e o último
-#[6, 5, 4, 3, 1, 2, 9, 8]
-def fitness(solution):
 
+def fitness(solution):
     removerZerosDolado(solution)
     cost = 0
     i = 0
-
     # Distância do Depot até a 1ª cidade da 1ª rota
     cost += matrix_distancias[0][solution[0].id]
-
     # Distância entre as cidades no vetor da solução.
     for _ in range(len(solution)-1):
         cost += matrix_distancias[solution[i].id][solution[i+1].id]
         i += 1
-
     # Distância da última cidade da última rota até o Depot
     cost += matrix_distancias[solution[i].id][0]
 
 #  Checar nº de rotas, e aplicar penalidade caso exceda capacidade máxima
     i = 0
     num_of_depots = 1
-
     while i < len(solution):
         if solution[i].id == 0:
             num_of_depots += 1
@@ -169,7 +162,6 @@ def fitness(solution):
             weight += solution[i].demand
             if solution[i].demand == 0:
                 if weight > k_cap_max:
-                    # penalty*50 performed better
                     penalty += (weight - k_cap_max)*50
                     cost += penalty
                     weight = 0
