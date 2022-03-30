@@ -261,24 +261,20 @@ def tournament_select_two(old_pop):
 
 
 def crossover(parents):
-    # filhos serão construídos através de cortes nos vetores dos pais
-
     pai1 = parents[0]
     pai2 = parents[1]
     removeZeros(pai1)
     removeZeros(pai2)
 
-    leen = n_genes-1 #nº cidades sem o depot
+    leen = n_genes-1 #nº cidades sem o deposito
     cut1, cut2 = random.randrange(leen), random.randrange(leen)
-
     cut1, cut2 = min(cut1, cut2), max(cut1, cut2)
-
+    
     child1 = pai1[:cut1] + pai2[cut1:cut2] + pai1[cut2:]
     child2 = pai2[:cut1] + pai1[cut1:cut2] + pai2[cut2:]
     
     distribuirZerosNaSol(pai1)
     distribuirZerosNaSol(pai2)
-
     distribuirZerosNaSol(child1)
     distribuirZerosNaSol(child2)
 
