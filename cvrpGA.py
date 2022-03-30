@@ -210,7 +210,6 @@ def create_initial_population(genes_entrada, pop_size):
 
     for i in range(int(pop_size)):
         randomized = random.sample(genes, len(genes))
-        randomized = turn_feasible(randomized)
         population.append(randomized)
 
     return population
