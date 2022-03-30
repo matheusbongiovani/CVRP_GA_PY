@@ -214,14 +214,13 @@ def turn_feasible(cromo_entrada):
 def create_initial_population(genes_entrada, pop_size):
     population = []
     genes = genes_entrada.copy()
-    depot = genes.pop(0)  # dado a entrada, retiramos o depot
+    genes.pop(0)  # dado a entrada, retiramos o deposito
 
     for i in range(int(pop_size)):
         randomized = random.sample(genes, len(genes))
         randomized = turn_feasible(randomized)
         population.append(randomized)
 
-    # modelo da solução: [3,1,2,6,4,5,7,8,9]
     return population
 
 
